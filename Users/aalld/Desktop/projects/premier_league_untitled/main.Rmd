@@ -27,8 +27,24 @@ library(rvest)
 ```{r}
 epl_matches_data <- read_csv("./data/eplmatches.csv")
 ```
+# function mchwk_tbl_fillna
+```{r}
+tbl_fill_na <- function(df) {
+  nrows <- nrow(df)
+  nmore <- 22 - nrows
+  
+  # add nmore more rows
+  for(i in 1:nmore) {
+    df[nrows + 1,] <- NA
+    nrows <- nrows +1
+  }
+  return (df)
+}
+```
 
-# create historic table positions by matchweek dataset 
+
+
+# function create_matchweek_table() returns a table for the end of a single matchweek for a single year
 ```{r}
 create_matchweek_table <- function(endyear, week) {
   url <- paste("https://www.worldfootball.net/schedule/eng-premier-league-", endyear - 1, "-", endyear, "-spieltag/", week, "/", sep="")
@@ -77,8 +93,7 @@ create_matchweek_table <- function(endyear, week) {
     html_nodes(":nth-child(7) .standard_tabelle td:nth-child(10)") %>%
       html_text()
   
-  return(
-    tibble(
+  table <- tibble(
       year = year_vec,
       week = week_vec,
       position = position,
@@ -91,10 +106,40 @@ create_matchweek_table <- function(endyear, week) {
       goal_diff = goal_diff,
       points = points
     )
-  )
+  
+  #table <- tbl_fill_na(table)
+  
+  return(table)
 }
 
-create_matchweek_table(2021, 38)
 ```
 
+# function make_year(year, max_weeks) returns a dataframe with all tables from the end of all matchweeks for a single year
+```{r}
+create_year_table <- function(year, max_weeks) {
+  year_table <- create_matchweek_table(year, 1)
+  for (i in 2:max_weeks) {
+    week_table <- create_matchweek_table(year, i)
+    year_table <- rbind(year_table, week_table)
+  }
+  return(year_table)
+}
+```
+
+# create full year for 2022
+```{r}
+table_2022 <- create_matchweek_table(2022, 1)
+for (i in 2:38) {
+  week_table <- create_matchweek_table(2022, i)
+  table_2022 <- rbind(table_2022, week_table)
+  
+}
+```
+
+# function make_year_range(year_range) makes a dataframe with all tables from the end of all matchweeks for a range of years
+```{r}
+make_year_range <- function(year_range) {
+  
+}
+```
 
