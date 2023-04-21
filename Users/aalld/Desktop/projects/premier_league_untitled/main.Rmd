@@ -1,0 +1,100 @@
+---
+title: "Premier League Untitled"
+author: "Ansel Alldredge"
+date: '2023-04-20'
+output:
+  pdf_document:
+    fig_height: 5
+    fig_width: 6.5
+  word_document: default
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = FALSE, message=FALSE}
+library(tidyverse)
+library(rvest)
+```
+
+
+# load epl matches csv
+```{r}
+epl_matches_data <- read_csv("./data/eplmatches.csv")
+```
+
+# create historic table positions by matchweek dataset 
+```{r}
+create_matchweek_table <- function(endyear, week) {
+  url <- paste("https://www.worldfootball.net/schedule/eng-premier-league-", endyear - 1, "-", endyear, "-spieltag/", week, "/", sep="")
+  
+  # return if path not allowed
+  if(!robotstxt::paths_allowed(url)) return(-1)
+  
+  year_vec <- rep(endyear, 20)
+  week_vec <- rep(week, 20)
+  
+  parsed_html <- read_html(url)
+  
+  position <- parsed_html %>%
+    html_nodes(":nth-child(7) .standard_tabelle td:nth-child(1)") %>%
+      html_text()
+  
+  team <- parsed_html %>%
+    html_nodes(":nth-child(7) .standard_tabelle a") %>%
+      html_text()
+    
+  played <- parsed_html %>%
+    html_nodes(":nth-child(7) .standard_tabelle td:nth-child(4)") %>%
+      html_text()
+    
+  wins <- parsed_html %>%
+    html_nodes(":nth-child(7) .standard_tabelle td:nth-child(5)") %>%
+      html_text()
+    
+  draws <- parsed_html %>%
+    html_nodes(":nth-child(7) .standard_tabelle td:nth-child(6)") %>%
+      html_text()
+    
+  losses <- parsed_html %>%
+    html_nodes(":nth-child(7) .standard_tabelle td:nth-child(7)") %>%
+      html_text()
+    
+  goals_for_against <- parsed_html %>%
+    html_nodes(":nth-child(7) .standard_tabelle td:nth-child(8)") %>%
+      html_text()
+    
+  goal_diff <- parsed_html %>%
+    html_nodes(":nth-child(7) .standard_tabelle td:nth-child(9)") %>%
+      html_text()
+    
+  points <- parsed_html %>%
+    html_nodes(":nth-child(7) .standard_tabelle td:nth-child(10)") %>%
+      html_text()
+  
+  return(
+    tibble(
+      year = year_vec,
+      week = week_vec,
+      position = position,
+      team = team,
+      played = played,
+      wins = wins,
+      draws = draws,
+      losses = losses,
+      goals_for_against = goals_for_against,
+      goal_diff = goal_diff,
+      points = points
+    )
+  )
+}
+
+create_matchweek_table(2021, 38)
+```
+
+
